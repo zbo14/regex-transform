@@ -19,8 +19,12 @@ const DEFAULT_FALSE_VALUES = [
   'n'
 ]
 
+const isNonEmptyString = x => x && typeof x === 'string'
+const isObjectLiteral = x => x?.constructor?.name === 'Object'
+const lowerCaseTrim = x => x?.trim()?.toLowerCase()
+
 const parseBoolean = (string, keyConfig) => {
-  string = string.trim().toLowerCase()
+  string = lowerCaseTrim(string)
 
   const trueValues = [].concat(keyConfig.true || DEFAULT_TRUE_VALUES)
 
@@ -33,9 +37,54 @@ const parseBoolean = (string, keyConfig) => {
   return null
 }
 
+const validateConfigObject = config => {
+  for (const value of Object.values(config)) {
+    const valueIsString = isNonEmptyString(value)
+    const valueIsObject = isObjectLiteral(value)
+
+    if (!valueIsString && !valueIsObject) {
+      throw new Error('Expected config value to be string or object literal')
+    }
+
+    const type = lowerCaseTrim(valueIsString ? value : value.type)
+
+    switch (type) {
+      case 'boolean':
+        valueIsObject && validateConfigValueBoolean(value)
+        break
+
+      case 'number':
+        break
+
+      case 'string':
+        break
+
+      default:
+        throw new Error('Invalid type in config: ' + value)
+    }
+  }
+}
+
+const validateConfigValueBoolean = value => {
+  for (const key of ['true', 'false']) {
+    const isValid = (
+      !value[key] ||
+      isNonEmptyString(value[key]) ||
+      (Array.isArray(value[key]) && value[key].every(isNonEmptyString))
+    )
+
+    if (!isValid) {
+      throw new Error(
+        `Invalid value in config: '${key}' must be a string or array of strings`
+      )
+    }
+  }
+}
+
 /**
  * A transform stream that writes text, matches it against a
- * regular expression, and reads the parsed JavaScript values.
+ * regular expression, and reads the parsed JavaScript values
+ * according to an optional configuration (if specified).
  *
  * @extends stream.Transform
  */
@@ -50,16 +99,18 @@ class RegexTransform extends stream.Transform {
     }
 
     if (config) {
-      const isStringArray = (
+      const configIsArray = (
         Array.isArray(config) &&
-        config.every(key => key && typeof key === 'string')
+        config.every(isNonEmptyString)
       )
 
-      const isObjectLiteral = config?.constructor?.name === 'Object'
+      const configIsObject = isObjectLiteral(config)
 
-      if (!isStringArray && !isObjectLiteral) {
+      if (!configIsArray && !configIsObject) {
         throw new Error('Expected config to be a string array or object literal')
       }
+
+      configIsObject && validateConfigObject(config)
     }
 
     super({ readableObjectMode: true })

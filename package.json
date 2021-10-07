@@ -1,0 +1,25 @@
+{
+  "name": "regex-transform",
+  "version": "0.0.1",
+  "description": "A transform stream that matches text on a regular expression.",
+  "main": "index.js",
+  "scripts": {
+    "docs": "jsdoc README.md index.js",
+    "example": "node example",
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "test": "NODE_ENV=test tap test.js"
+  },
+  "keywords": [
+    "regex",
+    "stream",
+    "transform stream"
+  ],
+  "author": "Zachary Balder",
+  "license": "MIT",
+  "devDependencies": {
+    "jsdoc": "^3.6.7",
+    "standard": "^16.0.4",
+    "tap": "^15.0.10"
+  }
+}

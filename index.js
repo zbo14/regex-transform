@@ -19,6 +19,7 @@ const DEFAULT_FALSE_VALUES = [
   'n'
 ]
 
+const isFunction = x => typeof x === 'function'
 const isNonEmptyString = x => x && typeof x === 'string'
 const isObjectLiteral = x => x?.constructor?.name === 'Object'
 const lowerCaseTrim = x => x?.trim()?.toLowerCase()
@@ -39,11 +40,13 @@ const parseBoolean = (string, keyConfig) => {
 
 const validateConfigObject = config => {
   for (const value of Object.values(config)) {
+    if (isFunction(value)) continue
+
     const valueIsString = isNonEmptyString(value)
     const valueIsObject = isObjectLiteral(value)
 
     if (!valueIsString && !valueIsObject) {
-      throw new Error('Expected config value to be string or object literal')
+      throw new Error('Expected config value to be string, function, or object literal')
     }
 
     const type = lowerCaseTrim(valueIsString ? value : value.type)
@@ -180,18 +183,22 @@ class RegexTransform extends stream.Transform {
         if (configIsObject) {
           const keyConfig = this.config[key]
 
-          const type = typeof keyConfig === 'string'
-            ? keyConfig
-            : keyConfig.type
+          if (isFunction(keyConfig)) {
+            value = keyConfig(value)
+          } else {
+            const type = isNonEmptyString(keyConfig)
+              ? keyConfig
+              : keyConfig.type
 
-          switch (type) {
-            case 'boolean':
-              value = parseBoolean(value, keyConfig)
-              break
+            switch (type) {
+              case 'boolean':
+                value = parseBoolean(value, keyConfig)
+                break
 
-            case 'number':
-              value = +value
-              break
+              case 'number':
+                value = +value
+                break
+            }
           }
         }
 

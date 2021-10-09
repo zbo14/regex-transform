@@ -57,7 +57,7 @@ t.test('it throws if config value isn\'t string or object literal', t => {
     console.log(rt)
     throw new Error('Should throw')
   } catch ({ message }) {
-    t.equal(message, 'Expected config value to be string or object literal')
+    t.equal(message, 'Expected config value to be string, function, or object literal')
   }
 
   t.end()
@@ -244,6 +244,52 @@ t.test('checks stream output with named parameters and (default) values', async 
       signed_up: false
     }
   ])
+
+  t.end()
+})
+
+t.test('checks stream output with named parameters and values', async t => {
+  const regex = /person:\s*(\w+)\s*,\s*(\d+),\s*\[(.*?)\]/g
+
+  const rt = new RegexTransform(regex, {
+    'person.name': 'string',
+    'person.age': 'number',
+
+    faves: faves => {
+      const [icecream, color] = faves
+        .split('-')
+        .map(x => x.trim())
+
+      return { icecream, color }
+    }
+  })
+
+  const promise = rt.collect()
+
+  rt.write('per')
+  rt.write('son:')
+  rt.write('  alice, 30, [ rocky road - heliotrope]')
+  rt.write('person')
+  rt.write(':      bob,   5')
+  rt.write('5,         [mint chip- burnt umber   ]   ')
+  rt.write('person')
+  rt.write(':charlie,26,')
+  rt.write('   y ')
+  rt.write('person:           ')
+  rt.write('  child, 1, 0\t\n')
+  rt.write('idk some other stuff.. ')
+
+  rt.end()
+
+  t.strictSame(await promise, [
+    {
+      person: { name: 'alice', age: 30 },
+      faves: { icecream: 'rocky road', color: 'heliotrope' }
+    },
+    {
+      person: { name: 'bob', age: 55 },
+      faves: { icecream: 'mint chip', color: 'burnt umber' }
+    }  ])
 
   t.end()
 })

@@ -1,6 +1,6 @@
 {
   "name": "regex-transform",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A transform stream that matches text on a regular expression.",
   "main": "index.js",
   "repository": {

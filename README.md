@@ -24,7 +24,7 @@ const RegexTransform = require('regex-transform')
 
 const regex = /person:\s*(\w+)\s*,\s*(\d+),\s*(\w+)/g
 
-// Config is optional
+// config is optional
 const config = {
   'person.name': 'string',
   'person.age': 'number',
@@ -39,7 +39,7 @@ const config = {
 const rt = new RegexTransform(regex, config)
 ```
 
-### Write and read data
+### Read and write data
 
 ```js
 // continued...
